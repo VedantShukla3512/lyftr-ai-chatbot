@@ -305,9 +305,14 @@ def chat(
 
             break
 
-        except Exception:
-            fallback_attempts += 1
-            continue
+        except Exception as e:
+            print(
+            f"LLM PROVIDER ERROR | {current_key_id} | "
+            f"{type(e).__name__}: {str(e)}",
+            flush=True
+        )
+        fallback_attempts += 1
+        continue
 
     if reply is None:
         raise HTTPException(
