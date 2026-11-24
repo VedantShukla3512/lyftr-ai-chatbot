@@ -1,3 +1,4 @@
+
 import {
   Activity,
   ChevronDown,
@@ -15,6 +16,9 @@ export default function Sidebar({
   hasMessages,
   mobileOpen,
   onCloseMobile,
+  conversations = [],
+  activeSessionId = "",
+  onSelectConversation = () => {},
 }) {
   const statusLabel = {
     checking: "Checking connection",
@@ -31,15 +35,20 @@ export default function Sidebar({
           onClick={onCloseMobile}
         />
       )}
+
       <aside className={`sidebar${mobileOpen ? " sidebar--open" : ""}`}>
         <div className="brand">
-          <div className="brand-mark" aria-hidden="true">
+          <div className="brand-mark">
             <Sparkles size={20} strokeWidth={2.2} />
           </div>
+
           <div className="brand-copy">
             <span className="brand-name">lyftr<span>ai</span></span>
-            <span className="brand-caption">INTELLIGENCE, ELEVATED</span>
+            <span className="brand-caption">
+              INTELLIGENCE, ELEVATED
+            </span>
           </div>
+
           <button
             className="icon-button sidebar-collapse"
             aria-label="Close navigation"
@@ -57,22 +66,51 @@ export default function Sidebar({
 
         <div className="sidebar-section">
           <div className="section-label">WORKSPACE</div>
+
           <div className="conversation-heading">
             <span>Conversations</span>
-            <span className="conversation-count">{hasMessages ? "1" : "0"}</span>
+            <span className="conversation-count">
+              {conversations.length}
+            </span>
           </div>
-          {hasMessages ? (
-            <button className="conversation-item conversation-item--active">
-              <MessageSquareText size={16} />
-              <span>Current conversation</span>
-              <span className="conversation-active-dot" />
-            </button>
+
+          {conversations.length > 0 ? (
+            <div className="conversation-list">
+              {conversations.map((conversation) => (
+                <button
+                  key={conversation.sessionId}
+                  className={`conversation-item ${
+                    activeSessionId === conversation.sessionId
+                      ? "conversation-item--active"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    onSelectConversation(conversation.sessionId);
+                    onCloseMobile?.();
+                  }}
+                  title={conversation.title}
+                >
+                  <MessageSquareText size={16} />
+                  <span>
+                    {conversation.title || "New conversation"}
+                  </span>
+
+                  {activeSessionId === conversation.sessionId && (
+                    <span className="conversation-active-dot" />
+                  )}
+                </button>
+              ))}
+            </div>
           ) : (
             <div className="empty-conversations">
               <span className="empty-conversations-icon">
                 <MessageSquareText size={17} />
               </span>
-              <span>Your conversations<br />will appear here</span>
+              <span>
+                Your conversations
+                <br />
+                will appear here
+              </span>
             </div>
           )}
         </div>
@@ -83,6 +121,7 @@ export default function Sidebar({
           <div className="connection-icon">
             <Activity size={17} />
           </div>
+
           <div className="connection-copy">
             <span className="connection-title">{statusLabel}</span>
             <span className="connection-detail">
@@ -93,17 +132,23 @@ export default function Sidebar({
                   : "Check your API server"}
             </span>
           </div>
+
           <span className="connection-indicator" />
         </div>
 
         <button
-          className={`settings-nav${settingsOpen ? " settings-nav--active" : ""}`}
+          className={`settings-nav${
+            settingsOpen ? " settings-nav--active" : ""
+          }`}
           onClick={onOpenSettings}
         >
           <Settings2 size={17} />
           <span>Settings</span>
-          <span className="settings-nav-label">{settingsOpen ? "OPEN" : ""}</span>
+          <span className="settings-nav-label">
+            {settingsOpen ? "OPEN" : ""}
+          </span>
         </button>
+
         <div className="sidebar-footer">
           <span className="footer-avatar">L</span>
           <span className="footer-account">
