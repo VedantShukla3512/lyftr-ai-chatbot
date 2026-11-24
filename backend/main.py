@@ -19,13 +19,16 @@ from litellm.caching import Cache
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
+
 LLM_API_KEYS = [
     key.strip()
     for key in os.getenv("LLM_API_KEYS", "").split(",")
     if key.strip()
 ]
+
 LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-4o-mini")
 MAX_HISTORY_MESSAGES = int(os.getenv("MAX_HISTORY_MESSAGES", "20"))
+
 ENABLE_FAILURE_SIMULATION = (
     os.getenv("ENABLE_FAILURE_SIMULATION", "false").lower() == "true"
 )
@@ -47,16 +50,13 @@ def get_connection():
 
 
 def initialize_database():
-
     db_path = get_database_path()
-
     parent = Path(db_path).parent
 
     if str(parent) != ".":
         parent.mkdir(parents=True, exist_ok=True)
 
     with get_connection() as connection:
-
         connection.execute("""
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,12 +84,8 @@ def initialize_database():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
     initialize_database()
-
-    # Enable LiteLLM's built-in in-memory cache.
     litellm.cache = Cache(type="local")
-
     yield
 
 
@@ -101,11 +97,11 @@ app = FastAPI(
 )
 
 
-# CORS configuration
-# CORS configuration
+# CORS CONFIGURATION
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://lyftr-ai-chatbot-1-z6fw.onrender.com",
 ]
 
 app.add_middleware(
@@ -118,18 +114,13 @@ app.add_middleware(
 
 
 class ChatRequest(BaseModel):
-
     session_id: constr(strip_whitespace=True, min_length=1, max_length=128)
-
     message: constr(strip_whitespace=True, min_length=1, max_length=4000)
-
     system_prompt: str | None = None
 
 
 def get_session_prompt(session_id):
-
     with get_connection() as connection:
-
         result = connection.execute(
             "SELECT system_prompt FROM sessions WHERE session_id = ?",
             (session_id,)
@@ -139,9 +130,7 @@ def get_session_prompt(session_id):
 
 
 def get_history(session_id):
-
     with get_connection() as connection:
-
         rows = connection.execute("""
             SELECT role, content
             FROM messages
@@ -157,14 +146,12 @@ def get_history(session_id):
 
 
 def parse_simulation(header):
-
     failures = {}
 
     if not ENABLE_FAILURE_SIMULATION or not header:
         return failures
 
     for item in header.split(","):
-
         try:
             key_id, status = item.strip().split("=")
 
@@ -180,11 +167,9 @@ def parse_simulation(header):
 
 
 def save_messages(session_id, user_message, reply, metadata, system_prompt):
-
     now = datetime.now(timezone.utc).isoformat()
 
     with get_connection() as connection:
-
         connection.execute("""
             INSERT INTO sessions (session_id, system_prompt, created_at)
             VALUES (?, ?, ?)
@@ -213,7 +198,6 @@ def save_messages(session_id, user_message, reply, metadata, system_prompt):
 # HEALTH ENDPOINT
 @app.get("/health")
 def health_check():
-
     try:
         with get_connection() as connection:
             connection.execute("SELECT 1")
@@ -240,7 +224,6 @@ def chat(
         alias="X-Simulate-Failure"
     )
 ):
-
     if not LLM_API_KEYS:
         raise HTTPException(
             status_code=503,
@@ -281,20 +264,13 @@ def chat(
     cache_hit = False
 
     for index, api_key in enumerate(LLM_API_KEYS):
-
         current_key_id = f"key_{index + 1}"
 
-        # Simulate provider failure for this request.
-        if (
-            current_key_id in failures
-            or "*" in failures
-        ):
-
+        if current_key_id in failures or "*" in failures:
             fallback_attempts += 1
             continue
 
         try:
-
             response = completion(
                 model=LLM_MODEL,
                 messages=messages,
@@ -318,7 +294,6 @@ def chat(
             )
 
             hidden = getattr(response, "_hidden_params", {}) or {}
-
             cache_hit = bool(hidden.get("cache_hit", False))
 
             key_id = None if cache_hit else current_key_id
@@ -329,12 +304,10 @@ def chat(
             break
 
         except Exception:
-
             fallback_attempts += 1
             continue
 
     if reply is None:
-
         raise HTTPException(
             status_code=503,
             detail="all providers unavailable"
@@ -374,9 +347,7 @@ def chat(
 # SESSION HISTORY ENDPOINT
 @app.get("/sessions/{session_id}/messages")
 def get_session_messages(session_id: str):
-
     with get_connection() as connection:
-
         session = connection.execute(
             "SELECT session_id FROM sessions WHERE session_id = ?",
             (session_id,)
@@ -398,7 +369,6 @@ def get_session_messages(session_id: str):
     messages = []
 
     for role, content, metadata in rows:
-
         item = {
             "role": role,
             "content": content
