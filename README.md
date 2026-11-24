@@ -1,204 +1,173 @@
-# ✨ Lyftr AI – Intelligent AI Chatbot
+# Lyftr AI – AI Chatbot
 
-An AI-powered conversational application built with **React and FastAPI**, featuring intelligent response generation, API provider failover, response caching, and conversation management.
+## 1. Live URLs
 
-Lyftr AI provides a clean, modern chat experience designed to make interacting with AI models simple, efficient, and reliable.
+- **Frontend:** http://localhost:8080
+- **Backend:** http://localhost:8000
+- **Backend Health Check:** http://localhost:8000/health
 
-## 🚀 Features
+*The application is currently configured for local development. Add deployed URLs here when hosting is completed.*
 
-- **AI-Powered Conversations:** Interact with AI models through a conversational interface.
-- **API Key Failover:** Automatically handles provider failures using the configured fallback mechanism.
-- **Response Caching:** Improves efficiency by reusing cached responses where applicable.
-- **Conversation Management:** Maintain separate chat sessions using unique session IDs.
-- **Custom System Prompts:** Customize the assistant's behavior and response style.
-- **Failure Simulation:** Test error-handling and provider-failure scenarios.
-- **Live Backend Monitoring:** Monitor backend connectivity through health checks.
-- **Responsive Interface:** Modern dark-themed user interface with an intuitive chat experience.
+## 2. Run Locally: With Docker and Without Docker
 
-## 🛠️ Technology Stack
+### With Docker
 
-### Frontend
-- React.js
-- Vite
-- JavaScript
-- CSS3
-- Lucide React
+**Prerequisites:**
+- Docker Desktop
+- Docker Compose
 
-### Backend
+**Steps:**
+
+1. Clone the repository:
+   ```bash
+   git clone <your-repository-url>
+   cd lyftr-ai-chatbot
+   ```
+
+2. Configure the required environment variables and Groq API key in the backend environment configuration.
+
+3. Build and start the application:
+   ```bash
+   docker compose up --build
+   ```
+
+4. Open the application:
+   - Frontend: http://localhost:8080
+   - Backend: http://localhost:8000
+   - Health Check: http://localhost:8000/health
+
+5. Stop the application:
+   ```bash
+   docker compose down
+   ```
+
+### Without Docker
+
+**Prerequisites:**
 - Python
-- FastAPI
-- Uvicorn
+- Node.js and npm
+- Groq API key
 
-### AI Integration
-- Groq / OpenAI-compatible API providers (as configured)
+**Backend setup:**
 
-### Development Tools
-- Visual Studio Code
-- Git
-- GitHub
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
 
-## 📁 Project Structure
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv .venv
+   ```
 
-```text
-lyftr-ai-chatbot/
-│
-├── backend/
-│   ├── main.py
-│   ├── requirements.txt
-│   └── .env
-│
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── ChatMessage.jsx
-│   │   │   ├── ChatWindow.jsx
-│   │   │   ├── MessageInput.jsx
-│   │   │   ├── Metadata.jsx
-│   │   │   ├── SettingsPanel.jsx
-│   │   │   └── Sidebar.jsx
-│   │   │
-│   │   ├── services/
-│   │   │   └── api.js
-│   │   │
-│   │   ├── App.jsx
-│   │   ├── index.css
-│   │   └── main.jsx
-│   │
-│   ├── index.html
-│   ├── package.json
-│   └── vite.config.js
-│
-├── .gitignore
-└── README.md
-```
+   Windows PowerShell:
+   ```powershell
+   .venv\Scripts\Activate.ps1
+   ```
 
-## ⚙️ Installation and Setup
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 1. Clone the Repository
+4. Configure the required environment variables.
 
-```bash
-git clone https://github.com/VedantShukla3512/lyftr-ai-chatbot.git
-```
+5. Start the FastAPI server using the project's configured entry point.
 
-```bash
-cd lyftr-ai-chatbot
-```
+**Frontend setup:**
 
-### 2. Backend Setup
+1. Open another terminal.
+2. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
 
-Navigate to the backend directory:
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-```bash
-cd backend
-```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-Create a virtual environment:
+5. Open the frontend URL displayed in the terminal.
 
-```bash
-python -m venv .venv
-```
+## 3. Design Decisions: Key Fallback, Caching, SQLite Session Storage
 
-Activate the environment on Windows:
+### Key Fallback
 
-```bash
-.venv\Scripts\activate
-```
+- Multiple API keys can be configured through environment variables.
+- The application uses a key fallback mechanism to improve reliability.
+- If an API request fails with one configured key, the system attempts another available key.
+- This helps reduce service interruptions caused by temporary provider or key-related failures.
 
-Install the dependencies:
+### Caching
 
-```bash
-pip install -r requirements.txt
-```
+- LiteLLM local caching is used to avoid unnecessary repeated API calls.
+- Repeated requests with matching cache keys can return cached responses.
+- Caching helps reduce response latency and unnecessary API usage.
 
-Configure your environment variables in the backend `.env` file using the variable names required by your backend implementation.
+### SQLite Session Storage
 
-Start the backend:
+- SQLite is used for persistent chat message and session storage.
+- Messages are associated with session IDs.
+- This allows conversations to be retrieved using their session IDs.
+- The backend exposes an endpoint to retrieve messages for a particular session.
 
-```bash
-uvicorn main:app --reload
-```
+## 4. Verification: How to See Failover, Cache Hits and Per-Message Token Usage
 
-Backend will be available at:
+### Failover Verification
 
-```text
-http://localhost:8000
-```
+1. Configure multiple valid API keys.
+2. Start the application.
+3. Trigger a provider failure or simulate a failure using the supported failure-simulation mechanism.
+4. Inspect backend logs and response metadata.
+5. Verify whether another configured key is attempted.
 
-### 3. Frontend Setup
+### Cache Hit Verification
 
-Open a new terminal and navigate to the frontend directory:
+1. Enable the LiteLLM local cache.
+2. Send a message to the chatbot.
+3. Send the exact same request again using the same settings and session context.
+4. Inspect the backend logs and response metadata for cache-related information.
+5. Compare response latency to observe the effect of caching.
 
-```bash
-cd frontend
-```
+### Per-Message Token Usage
 
-Install dependencies:
+- Send a message through the chatbot.
+- Inspect the response metadata returned by the backend.
+- Check the input token count and output token count.
+- Token usage is available alongside other response information such as latency and model details.
 
-```bash
-npm install
-```
+## 5. Setup Used: Your Editor and AI Tools
 
-Start the development server:
+### Development Environment
 
-```bash
-npm run dev
-```
+- **Code Editor:** Visual Studio Code
+- **Frontend:** React, Vite, JavaScript and CSS
+- **Backend:** Python and FastAPI
+- **AI Integration:** LiteLLM and Groq API
+- **Database:** SQLite
+- **Containerization:** Docker and Docker Compose
+- **Version Control:** Git and GitHub
 
-Open the local URL displayed by Vite in your browser.
+### AI Development Tools
 
-## 🔌 API Documentation
+- ChatGPT – Assistance with implementation, debugging, code explanations and documentation.
+- GitHub Copilot – Coding assistance and development support.
 
-The backend exposes the following API endpoints:
+## 6. Bonus Features (if any): What You Added Beyond the Requirements and Why
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/health` | Checks backend health and connectivity |
-| POST | `/chat` | Processes chat messages and generates AI responses |
+### Additional Features
 
-Interactive API documentation is available through FastAPI:
+- **Conversation Management:** Ability to create and switch between multiple conversations.
+- **Persistent Session IDs:** Browser local storage is used to retain the active conversation ID.
+- **Chat History Restoration:** Previously stored messages can be retrieved using the session ID.
+- **Health Monitoring:** Backend connectivity is checked periodically to display connection status.
+- **Failure Simulation:** Supports testing failure-handling behaviour through a dedicated request header.
+- **Settings Panel:** Provides controls for system prompts and failure simulation.
+- **Modern Dark UI:** A responsive, dark-themed chatbot interface with a sidebar and message composer.
 
-```text
-http://localhost:8000/docs
-```
-
-## 🔐 Environment Configuration
-
-The application requires API credentials for the configured AI providers.
-
-- Store API keys in environment variables.
-- Never commit `.env` files or API credentials to GitHub.
-- Configure the required environment variable names according to the backend implementation.
-
-## 🖥️ Application Preview
-
-Screenshots of the application will be added here.
-
-### Chat Interface
-<!-- Add your chat interface screenshot here -->
-
-### Settings Panel
-<!-- Add your settings panel screenshot here -->
-
-## 🎯 Future Enhancements
-
-- User authentication and account management.
-- Persistent conversation history.
-- Improved streaming responses.
-- Additional AI model integrations.
-- Production deployment.
-- Enhanced analytics and response monitoring.
-
-## 👨‍💻 Developer
-
-**Vedant Shukla**
-
-B.Tech – Computer Science Engineering (AIML)
-
-
-
-
----
-
-⭐ If you find this project interesting, consider giving it a star on GitHub!
-
-**Built with curiosity and a passion for AI.**
+These features improve usability, reliability, debugging and the overall user experience.
